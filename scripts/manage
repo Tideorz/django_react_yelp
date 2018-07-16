@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PROJECT_ROOT=$(realpath $(dirname $0)/../)
+export DJANGO_SETTINGS_MODULE=yelp.settings
+cd $PROJECT_ROOT
+. activate
+http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= python project/manage.py "$@"
