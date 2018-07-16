@@ -1,6 +1,7 @@
 *.pyc
 db.sqlite3
 environ/
+env
 activate
 django_react_yelp/static/tetris/vendor/
 *.scssc

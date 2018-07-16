@@ -1,50 +1,51 @@
-#!/bin/sh
-rerun="YES"
-requirements="--requirement requirements.pip"
-pip_upgrade_option=""
-if [ $# -gt 0 ]; then
-    while getopts "um:" optname
-    do
-        case $optname in
-            u)  
-                pip_upgrade_option="--upgrade"
-                ;;  
-        esac
-    done
-fi
+#!/usr/bin/env bash
 
-#PKG_SOURCE_URL='https://pypi.python.org/pypi'
-#pip_cmd="pip install $pip_upgrade_option --index-url http://nfs-server/python --find-links http://nfs-server/python $requirements"
-pip_cmd="pip install $pip_upgrade_option --extra-index-url ${PKG_SOURCE_URL} --find-links ${PKG_SOURCE_URL} $requirements"
+set -e
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [ ! -d "environ" ]; then
-    virtualenv --system-site-packages --no-pip environ || (echo "Exiting; virtualenv failed" && exit 1)  
-    rerun=
-fi
+unset PIP_FIND_LINKS
+export PIP_INDEX_URL='http://devpi/pi'
+export PIP_TRUSTED_HOST='devpi'
 
+main() {
+    cd "$root"
 
-ln -sf environ/bin/activate
+    if [[ $1 ]]; then
+        "$@"
+        return
+    fi
 
-. ./activate
+    scl enable python27 "
+        /opt/rh/python27/root/usr/bin/virtualenv env ||
+        /usr/bin/virtualenv env ||
+        virtualenv env
 
-#[ -z "${rerun}" ] && (easy_install -q http://nfs-server/python/pip-1.6-jython.tar.gz )
+        scl_patch_virtualenv env
+    "
 
-PIPVERSION=`pip --version | cut -d' ' -f2`
-pip_status=$?
-if test $pip_status -ne 0
-then
-	wget https://bootstrap.pypa.io/get-pip.py
-	python get-pip.py
-	rm get-pip.py
-fi
+    if [[ $one_up_activate ]]; then
+        ln -sf "$(basename "$root")/env/bin/activate" ../activate
+    else
+        ln -sf env/bin/activate activate
+    fi
 
-$pip_cmd
-status=$?
+    install_packages
+}
 
-if test $status -eq 0
-then
-    echo "Run 'source activate' to activate the virtual environment, and 'deactivate' to switch back to the system ."
-else
-    echo "PIP failed to install all packages."
-    exit $status
-fi
+install_packages() {
+    . env/bin/activate
+    upgrade_pip
+    pip_install -r requirements.pip
+}
+
+upgrade_pip() {
+    pip_install -U 'pip==6.1.1'
+    pip_install -U 'setuptools==5.4.1'
+}
+
+pip_install() {
+    pip install -U "$@" 2>&1 |
+    grep -v 'DEPRECATION: Failed to find'
+}
+
+main "$@"
