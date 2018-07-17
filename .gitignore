@@ -6,3 +6,4 @@ activate
 django_react_yelp/static/tetris/vendor/
 *.scssc
 *.swp
+node_modules
