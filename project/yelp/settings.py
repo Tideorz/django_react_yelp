@@ -31,7 +31,12 @@ ALLOWED_HOSTS = [socket.gethostname()]
 
 # Application definition
 
-INSTALLED_APPS = [
+PROJECT_APPS = [
+    'yelp_home',
+    'yelp_map',
+]
+
+INSTALLED_APPS = PROJECT_APPS + [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
